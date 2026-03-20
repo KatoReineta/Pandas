@@ -46,17 +46,23 @@ del starbucks_frame["es_bakery"]
 
 
 # =============================================================================
-# 4. RESUMEN ESTADÍSTICO
+# 4. RESUMEN ESTADÍSTICO Y CONTEOS
 # =============================================================================
 
-# describe(): Genera conteo, media, min, max, desviación estándar y cuartiles (25%, 50%, 75%).
-# include='all' hace que también evalúe columnas de texto (mostrando frecuencias y valores únicos).
+# describe(): Genera conteo, media, min, max, desviación estándar y cuartiles.
+# include='all' hace que también evalúe columnas de texto.
 starbucks_frame.describe(include='all')
 
-# Operaciones matemáticas directas
-starbucks_frame["calories"].mean()             # Promedio de una columna
+# mean(): Calcula el promedio (la media aritmética).
+starbucks_frame["calories"].mean()             # Promedio de una columna específica
 starbucks_frame.mean(numeric_only=True)        # Promedio de todas las columnas numéricas
+
+# sum(): Suma total de los valores.
 starbucks_frame[['calories','fat']].sum()      # Suma total de las columnas indicadas
+
+# value_counts(): Cuenta cuántas veces aparece cada valor único en una columna.
+# Ideal para saber distribuciones (ej. cuántos productos exactos hay de tipo "bakery", "salad", etc.)
+conteo_tipos = starbucks_frame['type'].value_counts()
 
 
 # =============================================================================
@@ -77,10 +83,11 @@ loc_starbucks.loc['8-Grain Roll':'Banana Nut Loaf', ['calories']]
 
 
 # =============================================================================
-# 6. FILTROS CONDICIONALES
+# 6. FILTROS CONDICIONALES Y VALORES ÚNICOS
 # =============================================================================
 
-# unique(): Devuelve un arreglo con los valores únicos de una columna (ej. todos los tipos de comida)
+# unique(): Devuelve un arreglo solo con los valores únicos de una columna, sin repetirlos.
+# A diferencia de value_counts(), este no los cuenta, solo te dice cuáles existen.
 tipos_unicos = starbucks_frame['type'].unique()
 
 # Filtro simple: Guardar la condición en una variable ayuda a la legibilidad
