@@ -2,113 +2,155 @@ import pandas as pd
 import numpy as np
 
 # =============================================================================
-# 1. ACCESO Y LECTURA DE ARCHIVOS
+# 1. ACCESO, LECTURA Y EXPORTACIÓN DE ARCHIVOS
 # =============================================================================
 
-# La "r" antes de las comillas indica una "raw string", evitando que Python 
-# confunda las barras invertidas (\) con caracteres especiales.
 ruta = r"C:\Users\renat\Desktop\Progra\Python Codigos\Pandas\starbucks.csv"
 
-# read_csv(): Carga un archivo CSV en un DataFrame. 
-# (Se puede usar sep=";" si el archivo está separado por punto y coma).
-dataframe = pd.read_csv(ruta)
+# --- LECTURA DE DATOS ---
+starbucks_frame = pd.read_csv(ruta)                   # Lee archivos CSV
+
+# df_excel = pd.read_excel('archivo.xlsx')            # Lee archivos Excel
+# df_json = pd.read_json('archivo.json')              # Lee archivos JSON
+# df_sql = pd.read_sql('SELECT * FROM tabla', conn)   # Lee desde base de datos SQL
+# df_html = pd.read_html('url_o_archivo.html')        # Lee tablas de una web
+# df_clip = pd.read_clipboard()                       # Lee datos copiados al portapapeles
+
+# --- COPIA Y EXPORTACIÓN ---
+df_copia = starbucks_frame.copy()                     # Crea una copia independiente del DataFrame
+
+# Exportar a Excel con parámetros útiles
+# starbucks_frame.to_excel(
+#     "datos.xlsx", 
+#     sheet_name='Menu',      # Nombre de la hoja
+#     index=False,            # Evita exportar la columna de índices numéricos
+#     na_rep='Sin dato',      # Qué escribir donde haya valores nulos
+#     columns=['item', 'fat'] # Exportar solo columnas específicas
+# )
 
 
 # =============================================================================
 # 2. EXPLORACIÓN BÁSICA DE LOS DATOS
 # =============================================================================
 
-dataframe.head()    # Muestra las primeras 5 filas (útil para un vistazo rápido).
-dataframe.tail()    # Muestra las últimas 5 filas.
-dataframe.shape     # Devuelve (filas, columnas).
-dataframe.columns   # Devuelve el nombre de todas las columnas.
-dataframe.index     # Devuelve la información del índice de las filas.
-type(dataframe)     # Confirma el tipo de objeto (pandas.core.frame.DataFrame).
+print("--- PRIMERAS 5 FILAS ---")
+print(starbucks_frame.head())         
+
+print("\n--- INFORMACIÓN GENERAL DEL DATAFRAME ---")
+print(starbucks_frame.info())         
+
+starbucks_frame.tail()         # Muestra las últimas 5 filas (silencioso)
+starbucks_frame.shape          # Devuelve (filas, columnas)
+starbucks_frame.columns        # Devuelve el nombre de todas las columnas
+starbucks_frame.index          # Devuelve la información del índice de las filas
+starbucks_frame.dtypes         # Tipos de datos de todas las columnas (ej. int64, object)
+starbucks_frame['fat'].dtype   # Tipo de dato de una sola columna
 
 
 # =============================================================================
-# 3. MANIPULACIÓN DE COLUMNAS
+# 3. MANIPULACIÓN DE COLUMNAS E ÍNDICES
 # =============================================================================
 
-# Seleccionar columnas (Varias formas)
-df_reducido = dataframe[["item", "fat", "type"]] # Usando doble corchete
-col_fat = dataframe["fat"]                       # Seleccionar una sola (recomendado)
-col_fat_punto = dataframe.fat                    # Seleccionar usando punto (no recomendado si hay espacios)
+# Selección y eliminación
+df_reducido = starbucks_frame[["item", "fat"]] # Seleccionar múltiples columnas
+# del starbucks_frame["ranking"]               # Elimina una columna permanentemente (comentado para evitar errores al repetir)
 
-# Crear o modificar una columna (Si no existe, la crea; si existe, la sobrescribe)
-dataframe["ranking"] = 4 
+# Transformación de datos
+starbucks_frame.rename(columns={'item': 'Producto'})          # Renombra columnas
+starbucks_frame['fat'] = starbucks_frame['fat'].astype(float) # Convierte el tipo de dato
+# df['col'] = df['col'].map({'A': 'Alto', 'B': 'Bajo'})       # Reemplaza valores usando un diccionario
+# df['col'] = df['col'].apply(len)                            # Aplica una función a toda la columna
 
-# Crear una columna condicional (Guardará valores True/False)
-dataframe["es_bakery"] = dataframe["type"] == "bakery"
+# Operación condicional vectorizada (If/Else de NumPy)
+starbucks_frame['es_ligero'] = np.where(starbucks_frame['calories'] < 200, 'Sí', 'No') 
 
-# Eliminar una columna permanentemente
-del dataframe["es_bakery"]
-
-
-# =============================================================================
-# 4. RESUMEN ESTADÍSTICO Y CONTEOS
-# =============================================================================
-
-# describe(): Genera conteo, media, min, max, desviación estándar y cuartiles.
-# include='all' hace que también evalúe columnas de texto.
-dataframe.describe(include='all')
-
-# mean(): Calcula el promedio (la media aritmética).
-dataframe["calories"].mean()             # Promedio de una columna específica
-dataframe.mean(numeric_only=True)        # Promedio de todas las columnas numéricas
-
-# sum(): Suma total de los valores.
-dataframe[['calories','fat']].sum()      # Suma total de las columnas indicadas
-
-# value_counts(): Cuenta cuántas veces aparece cada valor único en una columna.
-# Ideal para saber distribuciones (ej. cuántos productos exactos hay de tipo "bakery", "salad", etc.)
-conteo_tipos = dataframe['type'].value_counts()
+# Manejo de índices
+starbucks_frame.set_index('item')                             # Establece una columna como índice
+starbucks_frame.reset_index(drop=True)                        # Reinicia el índice y elimina el anterior
+# starbucks_frame.reset_index(inplace=True)                   # Aplica el reinicio directamente al DataFrame
 
 
 # =============================================================================
-# 5. SELECCIÓN AVANZADA: .iloc vs .loc
+# 4. LIMPIEZA DE DATOS (VALORES NULOS Y DUPLICADOS)
 # =============================================================================
 
-# ---> .iloc (Index Location): Busca estrictamente por POSICIÓN NUMÉRICA (0, 1, 2...)
-dataframe.iloc[0]                  # Primera fila completa
-dataframe.iloc[1, 0]               # Fila 1, Columna 0 (un valor específico)
-dataframe.iloc[2:5, 1:3]           # Rango: Filas de 2 a 4, Columnas de 1 a 2
-
-# ---> .loc (Location): Busca estrictamente por ETIQUETA (nombres de índices o columnas)
-# Primero configuramos 'item' como índice para el ejemplo
-loc_starbucks = dataframe.set_index('item') 
-
-# Buscamos desde el ítem "8-Grain Roll" hasta "Banana Nut Loaf", y mostramos la columna 'calories'
-loc_starbucks.loc['8-Grain Roll':'Banana Nut Loaf', ['calories']]
+starbucks_frame.isnull()                  # Máscara booleana: True donde hay nulos
+starbucks_frame.notnull()                 # Inverso: True donde SÍ hay datos
+starbucks_frame.dropna()                  # Elimina cualquier fila que tenga algún valor nulo
+starbucks_frame.fillna(0)                 # Rellena todos los valores nulos con un 0 (u otro valor)
+starbucks_frame.drop_duplicates()         # Elimina filas idénticas repetidas
 
 
 # =============================================================================
-# 6. FILTROS CONDICIONALES Y VALORES ÚNICOS
+# 5. RESUMEN ESTADÍSTICO Y AGRUPACIÓN
 # =============================================================================
 
-# unique(): Devuelve un arreglo solo con los valores únicos de una columna, sin repetirlos.
-# A diferencia de value_counts(), este no los cuenta, solo te dice cuáles existen.
-tipos_unicos = dataframe['type'].unique()
+print("\n--- RESUMEN ESTADÍSTICO ---")
+print(starbucks_frame.describe(include='all'))   
 
-# Filtro simple: Guardar la condición en una variable ayuda a la legibilidad
-filtro_bakery = dataframe['type'] == 'bakery'
-df_bakery = dataframe[filtro_bakery]
+print("\n--- CONTEO POR TIPO DE COMIDA ---")
+print(starbucks_frame['type'].value_counts())    
 
-# Filtro múltiple (OR): Usar | para "O" (cumple una condición o la otra)
-filtro_salad = dataframe['type'] == 'salad'
-filtro_petite = dataframe['type'] == 'petite'
-df_salad_o_petite = dataframe[filtro_salad | filtro_petite]
+starbucks_frame["calories"].mean()        # Promedio
+starbucks_frame['fat'].sum()              # Suma total
 
-# Filtro múltiple (AND): Usar & para "Y" (debe cumplir ambas condiciones)
-filtro_calorias = dataframe['calories'] < 300
-filtro_carbo = dataframe['carb'] > 20
-df_sano = dataframe[filtro_calorias & filtro_carbo]
+# Agrupación (Groupby): Ideal para sacar estadísticas por categoría
+starbucks_frame.groupby('type').agg({'calories': 'mean'}) # Promedio de calorías por tipo de comida
 
 
 # =============================================================================
-# 7. ORDENAMIENTO DE DATOS
+# 6. SELECCIÓN AVANZADA
 # =============================================================================
 
-# sort_values(): Ordena el DataFrame según las columnas indicadas.
-# ascending=True (Menor a mayor / A-Z), ascending=False (Mayor a menor / Z-A)
-dataframe.sort_values(by=["fat", "calories"], ascending=True)
+# ---> Por posición numérica (.iloc y .iat)
+starbucks_frame.iloc[0:2, 1:3]     # Filas de 0 a 1, Columnas de 1 a 2
+starbucks_frame.iloc[[0, 2], :]    # Filas 0 y 2 específicas, todas las columnas
+starbucks_frame.iat[0, 1]          # Extrae un único valor exacto (más rápido que iloc)
+
+# ---> Por etiqueta/nombre (.loc y .at)
+# starbucks_frame.loc[0:2, ['item', 'calories']]  # Rango de filas y columnas por nombre
+# starbucks_frame.at[0, 'item']                   # Extrae un único valor exacto por nombre
+
+
+# =============================================================================
+# 7. FILTROS CONDICIONALES Y COMPARACIONES
+# =============================================================================
+
+starbucks_frame['type'].unique()          # Arreglo con valores únicos, sin repetir
+
+# Filtros lógicos
+filtro_cal = starbucks_frame['calories'] < 300
+filtro_tipo = starbucks_frame['type'] == 'bakery'
+df_sano = starbucks_frame[(filtro_cal) & (filtro_tipo)]   # Uso de AND (&)
+
+print("\n--- PRODUCTOS SANOS (Menos de 300 cal y tipo bakery) ---")
+print(df_sano)
+
+# Filtros avanzados
+df_lista = starbucks_frame[starbucks_frame['type'].isin(['salad', 'petite'])] # Filtra si el valor está en la lista
+starbucks_frame['calories'].eq(300)       # True si es igual a 300
+starbucks_frame['calories'].ne(300)       # True si NO es igual a 300
+
+# Comprobaciones globales a lo largo de un eje
+starbucks_frame.isnull().any()            # Devuelve True si ALGÚN valor es nulo en la columna
+starbucks_frame.notnull().all()           # Devuelve True solo si TODOS los valores tienen datos
+
+
+# =============================================================================
+# 8. UNIÓN DE DATAFRAMES (MERGE)
+# =============================================================================
+
+# pd.merge(df1, df2, on='columna_comun', how='inner')     # Une dos tablas usando una columna clave en común
+# how: 'inner' (intersección), 'outer' (todo), 'left' (manda la izq), 'right' (manda la der)
+# left_on / right_on: Se usa si las columnas clave se llaman distinto en cada tabla
+
+
+# =============================================================================
+# 9. ORDENAMIENTO DE DATOS
+# =============================================================================
+
+# Ordena por una o múltiples columnas
+starbucks_frame.sort_values(by=["fat", "calories"], ascending=[True, False])
+
+# Ordena el DataFrame según su índice de filas
+starbucks_frame.sort_index(ascending=True)
